@@ -22,6 +22,29 @@ def union(p,q):
         if e not in p:
             p.append(e)
 
+# Compute ranks of each page
+def compute_ranks(graph):
+    d = 0.8 # damping factor
+    numloops = 10
+    
+    ranks = {}
+    npages = len(graph)
+    for page in graph:
+        ranks[page] = 1.0 / npages
+    
+    for i in range(0, numloops):
+        newranks = {}
+        for page in graph:
+            newrank = (1 - d) / npages
+           
+            #Insert Code Here
+            for node in graph:
+                if page in graph[node]:
+                    newrank = newrank + d * (ranks[node] / len (graph[node]))
+                    
+            newranks[page] = newrank
+        ranks = newranks
+    return ranks
 
 # Extracting all links from requested page
 def get_all_links(page):
@@ -74,3 +97,26 @@ def crawl_web(seed):
             union(tocrawl, get_all_links(content))
             crawled.append(page)
     return index
+
+class Crawler:
+    
+    def __init__(self, seed):
+        self.seed = seed
+
+    def crawl_web(self):
+        tocrawl = [self.seed]
+        crawled = []
+        index = {}
+        graph = {}
+        while tocrawl:
+            page = tocrawl.pop()
+            if page not in crawled:
+                content = get_page(page)
+                add_page_to_index(index, page, content)
+                outlinks = get_all_links(content)
+                
+                graph[page] = outlinks
+                union(tocrawl, outlinks)
+                crawled.append(page)
+                
+        return index, graph  
