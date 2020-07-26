@@ -1,12 +1,13 @@
-# Getting url from the Internet
+import operator
+
 def get_page(url):
     try:
-        import urllib
-        return urllib.urlopen(url).read()
+        import requests
+        return requests.get(url).text
     except:
         return ""
 
-# Returning first link and end position of the link
+
 def get_next_target(page):
     start_link = page.find('<a href=')
     if start_link == -1:
@@ -16,13 +17,13 @@ def get_next_target(page):
     url = page[start_quote + 1:end_quote]
     return url, end_quote
 
-# Union two arrays
+
 def union(p,q):
     for e in q:
         if e not in p:
             p.append(e)
 
-# Compute ranks of each page
+
 def compute_ranks(graph):
     d = 0.8 # damping factor
     numloops = 10
@@ -46,7 +47,7 @@ def compute_ranks(graph):
         ranks = newranks
     return ranks
 
-# Extracting all links from requested page
+
 def get_all_links(page):
     links = []
     while True:
@@ -59,36 +60,55 @@ def get_all_links(page):
     return links
 
 
-# Adding funtions for indexing and crawled pages
-
-
-# Adding word to the index
 def add_to_index(index,keyword,url):
     if keyword in index:
         index[keyword].append(url)
     else:
-        # not found, add new keyword to index
         index[keyword] = [url]
 
-# Help function that search the index for the keyword
+
 def lookup(index,keyword):
     if keyword in index:
         return index[keyword]
     else:
         return None
 
-# splitting page into words and adds them to index
+
 def add_page_to_index(index,url,content):
     words = content.split()
     for keyword in words:
         add_to_index(index,keyword,url)
 
 
-# starting web crawling on a particular url
+def all_search(index, ranks, keyword):
+    print("all search")
+    all_search_result = lookup(index, keyword)    
+    if len(all_search_result) == 0: return None
+
+    page_rank_dic = {}
+    for item in all_search_result:
+        page_rank_dic[item] = ranks[item]
+
+    sorted_pages = sorted(page_rank_dic.items(), key = operator.itemgetter(1), reverse=True)
+    
+    return  [item[0] for item in sorted_pages] 
+
+
+def lucky_search(index, ranks, keyword):
+    pages=lookup(index,keyword)
+    if not pages:
+        return None
+    best_page=pages[0]
+    for candidate in pages:
+        if ranks[candidate]>ranks[best_page]:
+            best_page=candidate
+    return best_page
+
+
 def crawl_web(seed):
     tocrawl = [seed]
     crawled = []
-    index = {} #starting with empty dictionary
+    index = {}
     while tocrawl:
         page = tocrawl.pop()
         if page not in crawled:
@@ -104,6 +124,7 @@ class Crawler:
         self.seed = seed
 
     def crawl_web(self):
+        print("crawling web")
         tocrawl = [self.seed]
         crawled = []
         index = {}
